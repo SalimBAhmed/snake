@@ -1,0 +1,2 @@
+- Every time you make a change. document the change in a log file which you will refer to when making future changes.
+- Every time you are making a change, refer to the log file to see previous changes.
