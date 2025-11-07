@@ -1,15 +1,22 @@
 import pygame
 import sys
-from typing import List, Optional, Dict, Any
+from typing import ClassVar, List, Optional, Dict, Any
 from snake.settings import GAME_HEIGHT, GAME_WIDTH, WINDOW_WIDTH, WINDOW_HEIGHT, BLACK, FPS, BLOCK_SIZE, UP, DOWN, LEFT, RIGHT
 from snake.player import Player
 from snake.food import Food
 from snake.sprites import load_spritesheet
-from snake.menu import PauseMenu, GameMenu
+from snake.menu import PauseMenu, GameMenu, SinglePlayerMenu, MultiplayerMenu, Menu
 from snake.ui import UI, SinglePlayerUI, MultiplayerUI
 from snake.food_generator import FoodGenerator
 
 class Game:
+    menu: ClassVar[Dict[str, Menu]] = {
+        "game_menu": GameMenu,
+        "single_player_menu": SinglePlayerMenu,
+        "multiplayer_menu": MultiplayerMenu,
+        "pause_menu": PauseMenu
+    }
+
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -20,11 +27,9 @@ class Game:
         # Game state
         self.running = True
         self.started = False
-        self.pause_menu = PauseMenu()
-        self.game_menu = GameMenu()
         self.menu_option = None
-        self.in_pause_menu = False
-        self.in_game_menu = True
+        self.in_menu = True
+        self.menu_type = "game_menu"
         self.ui: Optional[UI] = None
         self.powerup_available = False
         self.players: List[Player] = []
@@ -81,7 +86,7 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
             
-            if self.in_game_menu:
+            if self.in_menu:
                 self._handle_menu_events(event)
             elif event.type == pygame.KEYDOWN:
                 self._handle_game_events(event)
@@ -90,36 +95,37 @@ class Game:
         """Handle events when in the game menu."""
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                self.game_menu.previous_option()
+                Game.menu[self.menu_type].previous_option()
             elif event.key == pygame.K_DOWN:
-                self.game_menu.next_option()
+                Game.menu[self.menu_type].next_option()
             elif event.key in (pygame.K_SPACE, pygame.K_RETURN):
                 self._process_menu_selection()
     
     def _process_menu_selection(self) -> None:
         """Process the selected menu option."""
-        self.menu_option = self.game_menu.get_option()
+        self.menu_option = Game.menu[self.menu_type].get_option()
         if self.menu_option == "exit":
             self.running = False
         else:
             player_count = 1 if self.menu_option == "single_player" else 2
             self.setup_players(player_count)
-            self.in_game_menu = False
+            self.in_menu = False
             self.started = True
     
     def _handle_game_events(self, event: pygame.event.Event) -> None:
         """Handle events during gameplay."""
         if event.key == pygame.K_ESCAPE:
-            self.in_pause_menu = not self.in_pause_menu
-            self.started = not self.in_pause_menu
-        elif not self.in_pause_menu:
+            self.in_menu = not self.in_menu
+            self.menu_type = "pause_menu"
+            self.started = not self.in_menu
+        elif not self.in_menu:
             # Pass input to all players
             for player in self.players:
                 player.handle_input(event.key)
     
     def update(self) -> None:
         """Update game state."""
-        if not self.started or self.in_pause_menu:
+        if not self.started or self.in_menu:
             return
         # Update players
         for player in self.players:
@@ -182,20 +188,16 @@ class Game:
     def draw(self) -> None:
         """Draw the current game state."""
         
-        if self.in_game_menu:
-            self.game_menu.draw(self.screen)
-        elif self.menu_option == "exit":
-            self.running = False
+        if self.in_menu:
+            Game.menu[self.menu_type].draw(self.screen)
         else:
             if self.menu_option == "single_player":
                 self.ui = SinglePlayerUI(self.screen)
             elif self.menu_option == "multiplayer":
                 self.ui = MultiplayerUI(self.screen)
             self.ui.draw()
-            if not self.in_pause_menu:
-                for player in self.players:
-                    player.draw(self.screen)
-                self.food_generator.draw(self.screen)
-            else:
-                self.pause_menu.draw(self.screen)
+            for player in self.players:
+                player.draw(self.screen)
+            self.food_generator.draw(self.screen)
+
         pygame.display.flip()
