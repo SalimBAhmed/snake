@@ -104,11 +104,13 @@ class Game:
     def _process_menu_selection(self) -> None:
         """Process the selected menu option."""
         self.menu_option = Game.menu[self.menu_type].get_option()
-        if self.menu_option == "exit":
+        print(self.menu_option)
+        if self.menu_option.upper() == "EXIT":
             self.running = False
         else:
-            player_count = 1 if self.menu_option == "single_player" else 2
-            self.setup_players(player_count)
+            if self.menu_type == "game_menu":
+                player_count = 1 if self.menu_option == "single_player" else 2
+                self.setup_players(player_count)
             self.in_menu = False
             self.started = True
     
