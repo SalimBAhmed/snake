@@ -1,5 +1,7 @@
-from snake.settings import BLACK, GAME_WIDTH, GAME_HEIGHT, BLOCK_SIZE
 import pygame
+
+from snake.settings import BLACK, BLOCK_SIZE, GAME_HEIGHT, GAME_WIDTH
+
 
 class UI:
     def __init__(self, screen):
@@ -8,7 +10,6 @@ class UI:
 
     def draw(self):
         pass
-
 
 class SinglePlayerUI(UI):
     def __init__(self, screen):
