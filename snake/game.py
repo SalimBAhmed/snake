@@ -1,29 +1,42 @@
 import pygame
 import sys
 from typing import ClassVar, List, Optional, Dict
+from snake.event_handler import EventHandler
+from snake.game_state import GameState
 from snake.settings import (
-    GAME_HEIGHT,
-    GAME_WIDTH,
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
     FPS,
     BLOCK_SIZE,
     RIGHT,
+    BASE_WIDTH,
+    calculate_scaled_values,
+    get_resolution,
 )
 from snake.player import Player
 from snake.sprites import load_spritesheet
-from snake.menu import PauseMenu, GameMenu, SinglePlayerMenu, MultiplayerMenu, Menu
+from snake.menu import (
+    PauseMenu,
+    MainMenu,
+    SinglePlayerMenu,
+    MultiplayerMenu,
+    Menu,
+    SettingsMenu,
+)
 from snake.ui import UI, SinglePlayerUI, MultiplayerUI
 from snake.food_generator import FoodGenerator
 from snake.mode import SinglePlayerMode, MultiplayerMode
+from snake.renderer import Renderer
+
+WINDOW_WIDTH, WINDOW_HEIGHT = get_resolution()
+GAME_WIDTH, GAME_HEIGHT = calculate_scaled_values()
 
 
 class Game:
     menu: ClassVar[Dict[str, Menu]] = {
-        "game_menu": GameMenu,
-        "single_player_menu": SinglePlayerMenu,
-        "multiplayer_menu": MultiplayerMenu,
-        "pause_menu": PauseMenu,
+        "main_menu": MainMenu(),
+        "single_player_menu": SinglePlayerMenu(),
+        "multiplayer_menu": MultiplayerMenu(),
+        "pause_menu": PauseMenu(),
+        "settings_menu": SettingsMenu(),
     }
 
     def __init__(self):
@@ -38,23 +51,35 @@ class Game:
         self.started = False
         self.menu_option = None
         self.in_menu = True
-        self.menu_type = "game_menu"
+        self.menu_type = "main_menu"
         self.ui: Optional[UI] = None
         self.powerup_available = False
         self.players: List[Player] = []
         self.food_generator = FoodGenerator()
         self.mode = None
 
+        # Game State v2
+        # self.game_state = GameState()
+        # self.event_handler = EventHandler()
+        # self.renderer = Renderer(self.screen)
+
     def setup_players(self, player_count: int) -> None:
         """Initialize players based on game mode."""
         self.players.clear()
-
+        starting_position_x = (
+            GAME_WIDTH // 2 if (GAME_WIDTH // 2) % 20 == 0 else (GAME_WIDTH // 2) + 10
+        )
+        starting_position_y = (
+            GAME_HEIGHT // 2
+            if (GAME_HEIGHT // 2) % 20 == 0
+            else (GAME_HEIGHT // 2) + 10
+        )
         if player_count == 1:
             # Single player in the middle of the screen
             self.players.append(
                 Player(
                     self.sprites,
-                    start_pos=(GAME_WIDTH // 2, GAME_HEIGHT // 2),
+                    start_pos=(starting_position_x, starting_position_y),
                     start_direction=RIGHT,
                     player_id=1,
                 )
@@ -64,7 +89,7 @@ class Game:
             self.players.append(
                 Player(
                     self.sprites,
-                    start_pos=(GAME_WIDTH // 2, GAME_HEIGHT // 2),
+                    start_pos=(starting_position_x, starting_position_y),
                     start_direction=RIGHT,
                     player_id=1,
                 )
@@ -72,7 +97,10 @@ class Game:
             self.players.append(
                 Player(
                     self.sprites,
-                    start_pos=((GAME_WIDTH // 2) + 400, GAME_HEIGHT // 2),
+                    start_pos=(
+                        starting_position_x + WINDOW_WIDTH - GAME_WIDTH,
+                        starting_position_y,
+                    ),
                     start_direction=RIGHT,
                     player_id=2,
                 )
@@ -109,6 +137,16 @@ class Game:
 
     def _handle_menu_events(self, event: pygame.event.Event) -> None:
         """Handle events when in the game menu."""
+        # Let the settings menu handle its own events when in submenu
+        if self.menu_type == "settings_menu":
+            changed = Game.menu[self.menu_type].handle_events(event)
+
+            if changed:
+                global WINDOW_WIDTH, WINDOW_HEIGHT, GAME_WIDTH, GAME_HEIGHT
+                WINDOW_WIDTH, WINDOW_HEIGHT = get_resolution()
+                GAME_WIDTH, GAME_HEIGHT = calculate_scaled_values()
+                self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 Game.menu[self.menu_type].previous_option()
@@ -120,16 +158,16 @@ class Game:
     def _process_menu_selection(self) -> None:
         """Process the selected menu option."""
         self.menu_option = Game.menu[self.menu_type].get_option()
-        print(self.menu_option)
         if self.menu_option.upper() == "EXIT":
             self.running = False
         else:
-            if self.menu_type == "game_menu":
-                self.menu_type = (
-                    "single_player_menu"
-                    if self.menu_option == "single_player"
-                    else "multiplayer_menu"
-                )
+            if self.menu_type == "main_menu":
+                if self.menu_option == "single_player":
+                    self.menu_type = "single_player_menu"
+                elif self.menu_option == "multiplayer":
+                    self.menu_type = "multiplayer_menu"
+                elif self.menu_option == "settings":
+                    self.menu_type = "settings_menu"
             elif self.menu_type == "single_player_menu":
                 self.mode = SinglePlayerMode()
                 self.setup_players(1)
@@ -143,6 +181,14 @@ class Game:
             elif self.menu_type == "pause_menu":
                 self.in_menu = False
                 self.started = True
+            elif self.menu_type == "settings_menu":
+                # Handle settings menu navigation
+                settings_menu = Game.menu[self.menu_type]
+                settings_menu._process_menu_selection()
+
+                # If "Back" is selected, return to main menu
+                if self.menu_option == "Back":
+                    self.menu_type = "main_menu"
 
     def _handle_game_events(self, event: pygame.event.Event) -> None:
         """Handle events during gameplay."""
@@ -201,8 +247,8 @@ class Game:
         min_x = 0
         max_x = GAME_WIDTH
         if player.player_id == 2:
-            min_x = 400
-            max_x = GAME_WIDTH + 400
+            min_x = WINDOW_WIDTH - GAME_WIDTH
+            max_x = BASE_WIDTH
         if head.x < min_x or head.x >= max_x or head.y < 0 or head.y >= GAME_HEIGHT:
             return True
 
