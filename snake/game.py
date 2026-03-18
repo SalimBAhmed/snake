@@ -7,7 +7,6 @@ from snake.settings import (
     FPS,
     BLOCK_SIZE,
     RIGHT,
-    BASE_WIDTH,
     calculate_scaled_values,
     get_resolution,
 )
@@ -25,6 +24,7 @@ from snake.ui import UI, SinglePlayerUI, MultiplayerUI
 from snake.food_generator import FoodGenerator
 from snake.mode import SinglePlayerMode, MultiplayerMode
 from snake.renderer import Renderer
+from snake.collision_handler import CollisionHandlerFactory
 
 WINDOW_WIDTH, WINDOW_HEIGHT = get_resolution()
 GAME_WIDTH, GAME_HEIGHT = calculate_scaled_values()
@@ -57,6 +57,9 @@ class Game:
         self.players: List[Player] = []
         self.food_generator = FoodGenerator()
         self.mode = None
+
+        # Initialize collision handler chain
+        self.collision_chain = CollisionHandlerFactory.create_chain()
 
         # Game State v2
         # self.game_state = GameState()
@@ -212,56 +215,19 @@ class Game:
             # Check if player can move
             if player.can_move():
                 self.food_generator.generate(player.player_id)
-                # Check for collisions with food
-                self._check_food_collisions(player)
+                
+                # Check for collisions before moving (food & powerup checks + potential bounds check)
+                if self.collision_chain.handle(self, player):
+                    self.reset(player.player_id)
+                    continue
 
                 # Move the player
                 player.move()
-                self._check_food_collisions(player)
-                # Check for collisions with walls or self
-                if self._check_collisions(player):
+                
+                # Check for collisions after moving (food, powerup, walls, self)
+                if self.collision_chain.handle(self, player):
                     self.reset(player.player_id)
-
-    def _check_food_collisions(self, player: Player) -> None:
-        """Check if player collides with food."""
-        # Check regular food
-        food = self.food_generator.get(player.player_id, "food")
-        if food and player.check_collision(food.position[0], food.position[1]):
-            player.grow()
-            self.food_generator.destroy(player.player_id, "food")
-
-        # Check power-ups
-        for powerup_type in ["slow_down"]:  # Add more power-up types as needed
-            powerup = self.food_generator.get(player.player_id, powerup_type)
-            if powerup and player.check_collision(
-                powerup.position[0], powerup.position[1]
-            ):
-                powerup.apply(player)
-                self.food_generator.destroy(player.player_id, powerup_type)
-
-    def _check_collisions(self, player: Player) -> bool:
-        """Check for collisions with walls or self."""
-        head = player.body[0]
-
-        # Wall collision
-        min_x = 0
-        max_x = GAME_WIDTH
-        if player.player_id == 2:
-            min_x = WINDOW_WIDTH - GAME_WIDTH
-            max_x = BASE_WIDTH
-        if head.x < min_x or head.x >= max_x or head.y < 0 or head.y >= GAME_HEIGHT:
-            return True
-
-        # Self collision
-        if player.check_self_collision():
-            return True
-
-        # # Player-player collision (for multiplayer)
-        # for other in self.players:
-        #     if other != player and other.check_collision(head.x, head.y, include_head=False):
-        #         return True
-
-        return False
+                    continue
 
     def draw(self) -> None:
         """Draw the current game state."""
