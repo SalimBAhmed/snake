@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from snake.settings import get_resolution, calculate_scaled_values, BASE_WIDTH
+from snake.settings import get_resolution, calculate_scaled_values
 
 
 class CollisionHandler(ABC):
@@ -13,7 +13,7 @@ class CollisionHandler(ABC):
         return handler
         
     @abstractmethod
-    def handle(self, game: 'Game', player: 'Player') -> bool:
+    def handle(self, game, player) -> bool:
         if self._next_handler:
             return self._next_handler.handle(game, player)
         return False
@@ -64,7 +64,7 @@ class WallCollisionHandler(CollisionHandler):
         
         if player.player_id == 2:
             min_x = WINDOW_WIDTH - GAME_WIDTH
-            max_x = BASE_WIDTH
+            max_x = WINDOW_WIDTH
             
         if head.x < min_x or head.x >= max_x or head.y < 0 or head.y >= GAME_HEIGHT:
             return True

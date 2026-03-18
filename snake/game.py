@@ -69,14 +69,11 @@ class Game:
     def setup_players(self, player_count: int) -> None:
         """Initialize players based on game mode."""
         self.players.clear()
-        starting_position_x = (
-            GAME_WIDTH // 2 if (GAME_WIDTH // 2) % 20 == 0 else (GAME_WIDTH // 2) + 10
-        )
-        starting_position_y = (
-            GAME_HEIGHT // 2
-            if (GAME_HEIGHT // 2) % 20 == 0
-            else (GAME_HEIGHT // 2) + 10
-        )
+        
+        # Safely determine grid-aligned starting positions
+        starting_position_x = (GAME_WIDTH // (2 * BLOCK_SIZE)) * BLOCK_SIZE
+        starting_position_y = (GAME_HEIGHT // (2 * BLOCK_SIZE)) * BLOCK_SIZE
+        
         if player_count == 1:
             # Single player in the middle of the screen
             self.players.append(

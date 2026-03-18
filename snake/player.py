@@ -58,8 +58,8 @@ class Player:
         """
         self.body = [
             Body(start_pos[0], start_pos[1], start_direction),
-            Body(start_pos[0] - 20, start_pos[1], start_direction),
-            Body(start_pos[0] - 40, start_pos[1], start_direction),
+            Body(start_pos[0] - BLOCK_SIZE, start_pos[1], start_direction),
+            Body(start_pos[0] - 2 * BLOCK_SIZE, start_pos[1], start_direction),
         ]
         self.base_speed = 200
         self.speed = self.base_speed
@@ -127,11 +127,15 @@ class Player:
         WINDOW_WIDTH, WINDOW_HEIGHT = get_resolution()
 
         head = self.body[0]
-        new_x = (head.x + head.direction[0] * BLOCK_SIZE) % GAME_WIDTH
+        offset_x = WINDOW_WIDTH - GAME_WIDTH if self.player_id == 2 else 0
+        
+        # Determine movement relative to their local partition and wrap locally
+        rel_x = head.x - offset_x
+        new_rel_x = (rel_x + head.direction[0] * BLOCK_SIZE) % GAME_WIDTH
+        new_x = new_rel_x + offset_x
+        
         new_y = (head.y + head.direction[1] * BLOCK_SIZE) % GAME_HEIGHT
-        if self.player_id == 2:
-            new_x += WINDOW_WIDTH - GAME_WIDTH
-            new_x += WINDOW_WIDTH - GAME_WIDTH
+        
         # Create new head and update body
         new_head = Body(new_x, new_y, head.direction)
         self.body = [new_head] + self.body[:-1]
