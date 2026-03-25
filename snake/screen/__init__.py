@@ -1,23 +1,51 @@
 from abc import ABC, abstractmethod
-from snake.settings import BLACK
+from snake.settings import BLACK, BLOCK_SIZE
 import pygame
+from typing import ClassVar
 
-class Menu(ABC):
-    """
-    The Base State class declares operations common to all supported states.
-    """
-    _context: "MenuContext"
-    menu_name: str
-    options: list[str]
-    selected_option: int
+class Screen(ABC):
+    _context: "ScreenContext" = None
+    _sprites: pygame.sprite.Group = None
+
+    def __init__(self, sprites: pygame.sprite.Group = None) -> None:
+        if Screen._sprites is None and sprites is not None:
+            Screen._sprites = sprites
 
     @property
-    def context(self) -> "MenuContext":
+    def sprites(self) -> pygame.sprite.Group:
+        return self._sprites
+
+    @sprites.setter
+    def sprites(self, sprites: pygame.sprite.Group) -> None:
+        self._sprites = sprites
+
+    @property
+    def context(self) -> "ScreenContext":
         return self._context
 
     @context.setter
-    def context(self, context: "MenuContext") -> None:
+    def context(self, context: "ScreenContext") -> None:
         self._context = context
+    
+    @abstractmethod
+    def draw(self, screen) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def handle_events(self, event: pygame.event.Event) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update(self, clock) -> None:
+        raise NotImplementedError
+
+class MenuScreen(Screen):
+    """
+    The Base State class declares operations common to all supported states.
+    """
+    menu_name: str
+    options: list[str]
+    selected_option: int
 
     def draw_title(self, screen):
         screen_width, screen_height = screen.get_size()
@@ -72,24 +100,47 @@ class Menu(ABC):
             elif event.key in (pygame.K_SPACE, pygame.K_RETURN):
                 self._process_menu_selection()
 
+    def update(self, clock) -> None:
+        pass
+
     @abstractmethod
     def _process_menu_selection(self) -> None:
         raise NotImplementedError
 
+class GameScreen(Screen):
 
-class MenuContext:
+    @abstractmethod
+    def draw(self, screen):
+        raise NotImplementedError
+
+    @abstractmethod
+    def handle_events(self, event: pygame.event.Event) -> None:
+        raise NotImplementedError
+
+class ScreenContext:
     """
     The Context defines the interface of interest to clients.
     """
-    _menu: "Menu"
-    _previous_menu = []
-    def __init__(self, menu: "Menu") -> None:
-        self.transition_to(menu)
+    _screen: "Screen" = None
+    _previous_screen = []
 
-    def transition_to(self, menu: "Menu") -> None:
-        self._previous_menu.append(self._menu)
-        self._menu = menu
-        self._menu.context = self
+    def __init__(self, screen: "Screen") -> None:
+        self.transition_to(screen)
 
-    def transition_to_previous_menu(self) -> None:
-        self.transition_to(self._previous_menu.pop())
+    def transition_to(self, screen: "Screen") -> None:
+        self._previous_screen.append(self._screen)
+        self._screen = screen
+        self._screen.context = self
+
+    def transition_to_previous_screen(self) -> None:
+        self._screen = self._previous_screen.pop()
+        self._screen.context = self
+
+    def handle_events(self, event: pygame.event.Event) -> None:
+        self._screen.handle_events(event)
+
+    def update(self, clock) -> None:
+        self._screen.update(clock)
+
+    def draw(self, screen) -> None:
+        self._screen.draw(screen)

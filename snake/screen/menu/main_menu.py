@@ -1,7 +1,7 @@
-from snake.state_menu import Menu
+from snake.screen import MenuScreen
 from .single_player_menu import SinglePlayerMenu
 
-class MainMenu(Menu):
+class MainMenu(MenuScreen):
     menu_name: str = "Main Menu"
     options: list[str] = ["single_player", "multiplayer", "settings", "exit"]
     selected_option: int = 0
@@ -11,4 +11,4 @@ class MainMenu(Menu):
         if option == "single_player":
             self._context.transition_to(SinglePlayerMenu())
         else:
-            print(f"Selected option: {option}")
+            print(f"Selected option: {option}") 
