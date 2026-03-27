@@ -1,14 +1,22 @@
 from snake.screen import MenuScreen
-from .single_player_menu import SinglePlayerMenu
+from snake.screen.menu.single_player_menu import SinglePlayerMenu
+from snake.screen.menu.multiplayer_menu import MultiplayerMenu
+from snake.screen.menu.settings_menu import SettingsMenu
 
 class MainMenu(MenuScreen):
     menu_name: str = "Main Menu"
-    options: list[str] = ["single_player", "multiplayer", "settings", "exit"]
+    options: list[str] = ["Single Player", "Multiplayer", "Settings", "Exit"]
     selected_option: int = 0
 
     def _process_menu_selection(self):
         option = self.get_option()
-        if option == "single_player":
+        if option == "Single Player":
             self._context.transition_to(SinglePlayerMenu())
+        elif option == "Multiplayer":
+            self._context.transition_to(MultiplayerMenu())
+        elif option == "Settings":
+            self._context.transition_to(SettingsMenu())
+        elif option == "Exit":
+            exit(0)
         else:
             print(f"Selected option: {option}") 

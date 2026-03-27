@@ -128,7 +128,8 @@ class ScreenContext:
         self.transition_to(screen)
 
     def transition_to(self, screen: "Screen") -> None:
-        self._previous_screen.append(self._screen)
+        if self._screen:
+            self._previous_screen.append(self._screen)
         self._screen = screen
         self._screen.context = self
 

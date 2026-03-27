@@ -4,6 +4,7 @@ from snake.settings import BLACK, calculate_scaled_values, BLOCK_SIZE, get_resol
 from snake.player import Player
 from snake.food_generator import FoodGenerator
 from snake.collision_handler import CollisionHandlerFactory
+from snake.screen.menu.pause_menu import PauseMenu
 
 class MultiplayerGame(GameScreen):
     def __init__(self):
@@ -67,8 +68,9 @@ class MultiplayerGame(GameScreen):
     def handle_events(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                self.context.transition_to_previous_screen()
+                self.context.transition_to(PauseMenu())
             else:
+                self.started = True
                 for player in self.players:
                     player.handle_input(event.key)
 
