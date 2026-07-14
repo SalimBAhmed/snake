@@ -87,6 +87,5 @@ class SettingsMenu(MenuScreen):
             os.environ['SDL_VIDEO_CENTERED'] = '1'
             pygame.display.set_mode((width, height), flags)
             
-            print(f"Applied Resolution: {res_str}, Window Type: {win_str}")
         elif self.selected_option == 3:  # Back
             self._context.transition_to_previous_screen()

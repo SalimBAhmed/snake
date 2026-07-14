@@ -1,2 +1,3 @@
 from .single_player_game import SinglePlayerGame
 from .multiplayer_game import MultiplayerGame
+from .network_multiplayer_game import NetworkMultiplayerGame

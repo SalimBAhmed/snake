@@ -18,7 +18,7 @@ class MultiplayerGame(GameScreen):
         WINDOW_WIDTH, WINDOW_HEIGHT = get_resolution()
         starting_position_x = (GAME_WIDTH // (2 * BLOCK_SIZE)) * BLOCK_SIZE
         starting_position_y = (GAME_HEIGHT // (2 * BLOCK_SIZE)) * BLOCK_SIZE
-        
+
         # Single player in the middle of the screen
         players = []
         players.append(
@@ -85,7 +85,7 @@ class MultiplayerGame(GameScreen):
             # Check if player can move
             if player.can_move():
                 self.food_generator.generate(player.player_id)
-                
+
                 # Check for collisions before moving (food & powerup checks + potential bounds check)
                 if self.collision_chain.handle(self, player):
                     self.reset(player.player_id)
@@ -93,7 +93,7 @@ class MultiplayerGame(GameScreen):
 
                 # Move the player
                 player.move()
-                
+
                 # Check for collisions after moving (food, powerup, walls, self)
                 if self.collision_chain.handle(self, player):
                     self.reset(player.player_id)

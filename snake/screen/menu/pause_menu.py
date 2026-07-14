@@ -1,5 +1,5 @@
 from snake.screen import MenuScreen
-
+import pygame
 class PauseMenu(MenuScreen):
     menu_name: str = "Pause Menu"
     options: list[str] = ["Resume", "Main Menu", "Exit"]
@@ -13,4 +13,5 @@ class PauseMenu(MenuScreen):
             self._context.transition_to(self.context._previous_screen[0])
             self._context._previous_screen.clear()
         elif option == "Exit":
+            pygame.quit()
             exit(0)

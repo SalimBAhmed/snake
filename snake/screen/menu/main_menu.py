@@ -1,7 +1,10 @@
+import pygame
+
 from snake.screen import MenuScreen
-from snake.screen.menu.single_player_menu import SinglePlayerMenu
 from snake.screen.menu.multiplayer_menu import MultiplayerMenu
 from snake.screen.menu.settings_menu import SettingsMenu
+from snake.screen.menu.single_player_menu import SinglePlayerMenu
+
 
 class MainMenu(MenuScreen):
     menu_name: str = "Main Menu"
@@ -17,6 +20,7 @@ class MainMenu(MenuScreen):
         elif option == "Settings":
             self._context.transition_to(SettingsMenu())
         elif option == "Exit":
+            pygame.quit()
             exit(0)
         else:
-            print(f"Selected option: {option}") 
+            print(f"Selected option: {option}")

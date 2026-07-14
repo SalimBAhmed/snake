@@ -1,23 +1,20 @@
 import pygame
-import sys
-from typing import ClassVar, List, Optional, Dict
+
+from snake.screen import ScreenContext
+from snake.screen.menu import MainMenu
 from snake.settings import (
-    FPS,
     BLOCK_SIZE,
-    RIGHT,
+    FPS,
     calculate_scaled_values,
     get_resolution,
 )
 from snake.sprites import load_spritesheet
-from snake.screen import ScreenContext
-from snake.screen.menu import MainMenu
 
 WINDOW_WIDTH, WINDOW_HEIGHT = get_resolution()
 GAME_WIDTH, GAME_HEIGHT = calculate_scaled_values()
 
 
 class Game:
-
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -38,7 +35,7 @@ class Game:
             self.clock.tick(FPS)
 
         pygame.quit()
-        sys.exit()
+        exit(0)
 
     def handle_events(self) -> None:
         """Handle all input events."""
